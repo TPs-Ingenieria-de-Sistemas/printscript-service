@@ -47,6 +47,8 @@ dependencies {
     implementation 'com.github.SantiPe02:linter:1.1.0-SNAPSHOT'
     implementation 'com.github.SantiPe02:formatter:1.1.0-SNAPSHOT'
     implementation 'com.github.SantiPe02:cli:1.1.0-SNAPSHOT'
+    implementation 'com.github.SantiPe02:ast:1.1.0-SNAPSHOT'
+    implementation 'com.github.SantiPe02:largefilereading:1.1.0-SNAPSHOT'
 
     // Clikt dependency
     implementation 'com.github.ajalt.clikt:clikt:4.2.0'

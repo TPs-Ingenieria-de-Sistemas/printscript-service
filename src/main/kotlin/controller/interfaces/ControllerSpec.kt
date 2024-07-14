@@ -1,6 +1,7 @@
 // VERY IMPORTANT TO BE IN THIS PACKAGE
 package com.example.printscriptservice.controller.interfaces
 
+import interpreter.Interpreter
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
@@ -8,30 +9,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
-import java.io.File
+import java.io.BufferedInputStream
 
-
-// AS FOR NOW I'M USING ALL LOCAL FILES SO THERE IS NO TROUBLE
-// IN THE FUTURE IT SHOULD RECEIVE NOT A FILE BUT A STREAM.
-
-
-// que sea una interfaz
 @RequestMapping("/command")
 interface ControllerSpec {
-
-    /*// Usage: GET http://localhost:8080/command/lint
-    @GetMapping("/lint")
-    @Operation(
-        summary = "Lint a snippet",
-        responses = [
-            ApiResponse(
-                responseCode = "200",
-                description = "Linting completed",
-                content = [Content(mediaType = "text/plain", schema = Schema(type = "string"))]
-            )
-        ]
-    )
-    fun lint(@RequestParam snippet: String): String*/
 
     // Usage: POST http://localhost:8080/command/lint with JSON body
 
@@ -50,7 +31,7 @@ interface ControllerSpec {
         ]
     )
     // I think maybe it should recieve a MultiPartFile instead of a Json
-    fun lint(@RequestParam("file") file: MultipartFile, @RequestParam configJSON: MultipartFile): ResponseEntity<String>
+    fun lint(@RequestParam version: String, @RequestParam("file") file: MultipartFile, @RequestParam config: MultipartFile): ResponseEntity<String>
 
     @PostMapping("/execute")
     @Operation(
@@ -63,7 +44,7 @@ interface ControllerSpec {
             )
         ]
     )
-    fun execute(@RequestParam("file") file: MultipartFile): ResponseEntity<String>
+    fun execute(@RequestParam version: String, @RequestParam("file") stream: BufferedInputStream): ResponseEntity<Interpreter>
 
     @PostMapping("/format")
     @Operation(
@@ -76,7 +57,7 @@ interface ControllerSpec {
             )
         ]
     )
-    fun format(@RequestParam("file") file: MultipartFile, @RequestParam configJSON: MultipartFile): ResponseEntity<File>
+    fun format(@RequestParam version: String, @RequestParam("file") file: MultipartFile, @RequestParam config: MultipartFile): ResponseEntity<String>
 
 
 }

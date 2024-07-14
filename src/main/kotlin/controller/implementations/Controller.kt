@@ -5,7 +5,8 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
 import com.example.printscriptservice.service.implementations.Service
-import java.io.File
+import interpreter.Interpreter
+import java.io.BufferedInputStream
 
 
 @RestController
@@ -13,15 +14,17 @@ class Controller : ControllerSpec {
 
     val service = Service();
 
-    override fun lint(file: MultipartFile, configJSON: MultipartFile): ResponseEntity<String> {
-        return service.lint(file, configJSON)
+    // Como no sé si el snippet service soporta el List<WarningResult> que devuelve el linter, lo mando como String.
+    override fun lint(version: String, file: MultipartFile, config: MultipartFile): ResponseEntity<String>  {
+        return service.lint(version, file, config)
     }
 
-    override fun execute(file: MultipartFile): ResponseEntity<String> {
-        return service.execute(file)
+    // básicamente, recibe el stream, lo interpreta, devuelve el interpreter.
+    override fun execute(version: String, stream: BufferedInputStream): ResponseEntity<Interpreter> {
+        return service.execute(version, stream)
     }
 
-    override fun format(file: MultipartFile, configJSON: MultipartFile): ResponseEntity<File> {
-        return service.format(file, configJSON)
+    override fun format(version: String, file: MultipartFile, config: MultipartFile): ResponseEntity<String> {
+        return service.format(version, file, config)
     }
 }

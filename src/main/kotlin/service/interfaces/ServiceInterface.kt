@@ -2,10 +2,12 @@ package com.example.printscriptservice.service.interfaces
 
 import org.springframework.http.ResponseEntity
 import org.springframework.web.multipart.MultipartFile
-import java.io.File
+import interpreter.Interpreter
+import java.io.BufferedInputStream
 
 interface ServiceInterface {
-    fun lint(file:MultipartFile, configJSON:MultipartFile): ResponseEntity<String>
-    fun execute(file:MultipartFile): ResponseEntity<String>
-    fun format(file: MultipartFile, configJSON: MultipartFile): ResponseEntity<File>
+    // Después, otro, lo transformará a CLIKT???
+    fun lint(version: String, file: MultipartFile, config: MultipartFile): ResponseEntity<String>
+    fun execute(version: String, stream: BufferedInputStream): ResponseEntity<Interpreter>
+    fun format(version: String, file: MultipartFile, config: MultipartFile): ResponseEntity<String>
 }

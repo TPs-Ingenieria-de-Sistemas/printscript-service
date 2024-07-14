@@ -1,110 +1,159 @@
 package com.example.printscriptservice.service.implementations
 
-import com.example.printscriptservice.controller.implementations.Controller
+import MyLinter
 import com.example.printscriptservice.service.interfaces.ServiceInterface
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import stringReader.PartialStringReadingLexer
+import java.io.BufferedInputStream
+import interpreter.Interpreter
+import org.springframework.http.HttpStatus
 import org.springframework.web.multipart.MultipartFile
 import java.io.File
+import java.nio.charset.Charset
+import ast.Scope
+import factory.LexerFactoryImpl
+import formater.astFormatter.ASTFormatter
+import formater.configurationReader.ConfigurationReaderProvider
+import configurationReader.ConfigurationReaderProvider as LinterConfigReader
+import parser.MyParser
+import result.validation.WarningResult
+import translateFormatterConfigurationToRules
+
 
 class Service : ServiceInterface {
 
-    private val logger: Logger = LoggerFactory.getLogger(Controller::class.java)
+    // Y si al logger lo pongo fuera de la clase, como variable global???
+    private val logger: Logger = LoggerFactory.getLogger(Service::class.java)
 
-    // creo q devuelve una lista en realidad. Además, debería devolverla como Stream
-
-    override fun lint(file: MultipartFile, configJSON: MultipartFile): ResponseEntity<String> {
-        if (!isOfExtension(file, ".ps")) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The file must have a .ps extension")
+    // si recibiese un stream hacer prácticamente lo mismo que lo que hace el execute. Por el momento recibe un file.
+    override fun lint(version: String, file: MultipartFile, config: MultipartFile): ResponseEntity<String> {
+        logger.info("Linting Code")
+        val reader = LinterConfigReader().getReader(getExtension(config)).getOrElse {
+            logger.error("Error at creating reader for linter: ", it)
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(it.message)
         }
-        if(!isOfExtension(configJSON, ".json")) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The config file must have a .json extension")
+        val tempConfigFile = createConfigTempFile(config)
+        val configurations =
+            reader.readFileAndBuildRules(tempConfigFile).getOrElse {
+                logger.error("Error at building configurations for linter: ", it)
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(it.message)
+            }
+
+        val rules = translateFormatterConfigurationToRules(configurations)
+        val scope = lexAndParse(file, version).getOrElse {
+            logger.error("Error at lexing and parsing file", it)
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(it.message)
         }
-
-        val tempFile = createTempFile(file, ".ps")
-        val tempConfigFile = createTempFile(configJSON, ".json")
-
-        val output = captureOutput("analyzing", tempFile, tempConfigFile);
-
-        tempFile.delete()
+        val warnings = MyLinter().lintScope(scope, rules)
+        val output = warningsAsJSON(warnings)
         tempConfigFile.delete()
-
+        if(warnings.isEmpty()){
+            logger.info("Code linted successfully without any warnings")
+            return ResponseEntity.ok("Code linted successfully without any warnings")
+        }
         return ResponseEntity.ok(output)
     }
 
-    // devuelve el resultado de la ejecución
-    override fun execute(file: MultipartFile): ResponseEntity<String> {
-        if (!isOfExtension(file, ".ps")) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The file must have a .ps extension")
+
+    // Basically the same method the CLI uses. We may, eventually, not receive BufferedInputStream but a different, similar, data type.
+    override fun execute(version: String, stream: BufferedInputStream): ResponseEntity<Interpreter> {
+        logger.info("Executing snippet")
+        val lexer = LexerFactoryImpl(version).create()
+        val parser = MyParser()
+        var interpreter = Interpreter()
+        val buffer = ByteArray(1046)
+        var bytesRead = stream.read(buffer)
+        var tokenizer = PartialStringReadingLexer(lexer)
+
+        while (bytesRead != -1) {
+            val textBlock = String(buffer, 0, bytesRead, Charset.defaultCharset())
+            val tokenizerAndTokens = tokenizer.tokenizeString(textBlock)
+            tokenizer = tokenizerAndTokens.first
+            val tokens = tokenizerAndTokens.second
+
+            val ast = parser.parseTokens(tokens).getOrElse {
+                logger.error("Error at parsing tokens", it)
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Interpreter())
+            }
+            interpreter = interpreter.interpret(ast)
+            bytesRead = stream.read(buffer)
         }
-
-        // Save the file and configJSON to temporary files
-        val tempFile = createTempFile(file, ".ps")
-
-        val output = captureOutput("execute", tempFile);
-
-        return ResponseEntity.ok(output)
+        logger.info("Snippet executed successfully")
+        stream.close()
+        return ResponseEntity.ok(interpreter)
     }
 
-    // should return the original file with the formatting applied.
-    override fun format(file: MultipartFile, configJSON: MultipartFile): ResponseEntity<File> {
-        if (!isOfExtension(file, ".ps")) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null)
+    override fun format(version: String, file: MultipartFile, config: MultipartFile): ResponseEntity<String> {
+        logger.info("Formatting Code")
+        val lexer = LexerFactoryImpl(version).create()
+        val reader = ConfigurationReaderProvider().getReader(getExtension(config)).getOrElse {
+            logger.error("Error at creating reader for formatter: ", it)
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(it.message)
         }
-        if(!isOfExtension(configJSON, ".json")) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null)
-        }
-
-        val tempFile = createTempFile(file, ".ps")
-        val tempConfigFile = createTempFile(configJSON, ".json")
-
-        captureOutput("formatting", tempFile, tempConfigFile);
+        val tempConfigFile = createConfigTempFile(config)
+        val configurations =
+            reader.readFileAndBuildRules(tempConfigFile).getOrElse {
+                logger.error("Error at building configurations for formatter: ", it)
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(it.message)
+            }
+        val code = file.inputStream.bufferedReader().readText();
+        val formatter = ASTFormatter(lexer, MyParser(), configurations)
+        val formattedCode = formatter.formatString(code)
 
         tempConfigFile.delete()
-        try {
-            return ResponseEntity.ok(tempFile)
-        }
-        finally{
-            tempFile.delete()
-        }
+        logger.info("Code formatted successfully")
+        return ResponseEntity.ok(formattedCode)
+    }
+
+
+
+    private fun getExtension(file: MultipartFile): String {
+        return file.originalFilename?.substringAfterLast(".") ?: ""
     }
 
     private fun isOfExtension(file: MultipartFile, extension: String): Boolean {
-        return file.originalFilename?.endsWith(extension) == true
+        return file.originalFilename?.endsWith(extension) ?: false
     }
 
-    private fun createTempFile(file: MultipartFile, extension: String): File {
-        val tempFile = File.createTempFile("file", extension)
-        file.transferTo(tempFile)
-        return tempFile
-    }
-
-    private fun captureOutput(command: String, tempFile: File): String {
-        val processBuilder = ProcessBuilder("./gradlew", "run", "--args=$command ${tempFile.absolutePath}")
-        processBuilder.redirectErrorStream(true)
-
-        return runCommand(processBuilder);
-    }
-
-    private fun captureOutput(command: String, tempFile: File, jsonConfig: File): String {
-        val processBuilder = ProcessBuilder("./gradlew", "run", "--args=$command ${tempFile.absolutePath} ${jsonConfig.absolutePath}")
-        processBuilder.redirectErrorStream(true)
-
-        return try {
-            runCommand(processBuilder)
-        } catch (e: Exception) {
-            logger.error("Error executing command: $command", e)
-            "Error executing command: $command"
+    private fun createConfigTempFile(config: MultipartFile): File {
+        val tempConfigFile = if (isOfExtension(config, ".json")) {
+            File.createTempFile("config", ".json")
+        } else {
+            File.createTempFile("config", ".yaml")
         }
+
+        config.inputStream.use { input ->
+            tempConfigFile.outputStream().use { output ->
+                input.copyTo(output)
+            }
+        }
+
+        return tempConfigFile
     }
 
-    private fun runCommand(processBuilder: ProcessBuilder): String {
-        val process = processBuilder.start()
-        val output = process.inputStream.bufferedReader().readText()
-        process.waitFor()
-        logger.info("Command executed successfully")
-        return output
+
+    fun lexAndParse(file: MultipartFile, version: String): Result<Scope> {
+        val lexer = LexerFactoryImpl(version).create()
+        val parser = MyParser()
+        val text = file.inputStream.bufferedReader().readText()
+        val tokens = lexer.tokenize(text)
+        val ast = parser.parseTokens(tokens).getOrElse {
+            return Result.failure(it)
+        }
+        return Result.success(ast)
+    }
+
+    private fun warningToString(warning: WarningResult): String {
+        val range = warning.range
+        val string = "\t[\n" +
+                "\t\t\"range: Warning at range ${range.start} - ${range.end}\"\n" +
+                "\t\t\"message: ${warning.message}\"\n" +
+                "\t]"
+        return string
+    }
+    private fun warningsAsJSON(warnings: List<WarningResult>): String {
+        return "{\n" + warnings.joinToString("\n") { warningToString(it)  + ","} + "\n}"
     }
 }
