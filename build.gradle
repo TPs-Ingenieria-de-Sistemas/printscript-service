@@ -57,7 +57,7 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform()
 }
-
 application {
-    mainClass = "com.example.printscriptservice.app.MainKt"
+    mainClassName = 'com.example.printscriptservice.PrintscriptServiceApplicationKt'
 }
+
