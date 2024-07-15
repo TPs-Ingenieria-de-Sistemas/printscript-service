@@ -61,3 +61,16 @@ application {
     mainClassName = 'com.example.printscriptservice.PrintscriptServiceApplicationKt'
 }
 
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+tasks.register("installGitHooks", Copy) {
+    from new File(rootProject.rootDir, "hook/pre-commit")
+    into { new File(rootProject.rootDir, ".git/hooks") }
+}
+
+tasks.named("build") {
+    dependsOn("installGitHooks")
+}
