@@ -146,17 +146,6 @@ class Service : ServiceInterface {
     }
 
 
-    fun lexAndParse(file: MultipartFile, version: String): Result<Scope> {
-        val lexer = LexerFactoryImpl(version).create()
-        val parser = MyParser()
-        val text = file.inputStream.bufferedReader().readText()
-        val tokens = lexer.tokenize(text)
-        val ast = parser.parseTokens(tokens).getOrElse {
-            return Result.failure(it)
-        }
-        return Result.success(ast)
-    }
-
     fun lexAndParse(file: File, version: String): Result<Scope> {
         val lexer = LexerFactoryImpl(version).create()
         val parser = MyParser()

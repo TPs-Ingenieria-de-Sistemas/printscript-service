@@ -13,7 +13,7 @@ class TestAuxMethods {
             throw IllegalArgumentException("Resource not found for: $path")
         }
     }
-
+/*
     fun createMultipartFile(fileContent: String): MultipartFile {
         val byteArray = fileContent.toByteArray()
         return MockMultipartFile("file", "file.ps", "text/plain", byteArray)
@@ -26,5 +26,6 @@ class TestAuxMethods {
         val content = Files.readAllBytes(file)
         return MockMultipartFile(fileName, fileName, contentType, content)
     }
+   */
 
 }

@@ -4,8 +4,7 @@ import com.example.printscriptservice.printscript.service.implementations.Langua
 import com.example.printscriptservice.printscript.service.implementations.Service
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-
-
+import java.io.File
 
 
 // For testing it is using local files. Dunno if it is correct.
@@ -20,9 +19,12 @@ class ServiceTest {
 
         val absFile = aux.accessAbsolutePath("src/test/resources/linter/no-warnings-file.ps")
         val absConfig = aux.accessAbsolutePath("src/test/resources/linter/linterConfig.json")
-        val file = aux.getFile(absFile)
-        val config = aux.getFile(absConfig)
-        val result = service.lint("1.1", file, config)
+        val file = File(absFile)
+        val config = File(absConfig)
+
+        val snippet = file.inputStream().bufferedReader().use { it.readText() }
+        val json = config.inputStream().bufferedReader().use { it.readText() }
+        val result = service.lint("1.1", snippet, json)
         assertTrue(result.statusCode.is2xxSuccessful)
     }
     /*
