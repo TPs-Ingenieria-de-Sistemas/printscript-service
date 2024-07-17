@@ -18,6 +18,15 @@ repositories {
             password = project.findProperty("GITHUB_TOKEN") ?: System.getenv("TOKEN")
         }
     }
+
+    maven {
+        name = "GitHubPackagesClassRedisStreams"
+        url = uri("https://maven.pkg.github.com/austral-ingsis/class-redis-streams")
+        credentials {
+            username = project.findProperty("GITHUB_ACTOR") ?: System.getenv("USERNAME")
+            password = project.findProperty("GITHUB_TOKEN") ?: System.getenv("TOKEN")
+        }
+    }
 }
 
 group = 'com.example'
@@ -39,8 +48,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-reactor'
     implementation 'org.jetbrains.kotlin:kotlin-reflect'
-
-
+    implementation 'org.austral.ingsis:redis-streams-flux:0.1.13'
 
 
     // Swagger dependencies

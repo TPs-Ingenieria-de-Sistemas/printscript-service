@@ -20,9 +20,14 @@ springdoc:
     path: "/docs"
 
 # streamKeys to be used by producers
-stream:
-  key: "mystream"
+# claves usadas para acceder a los diferentes streams.
+redis:
+  stream:
+    linter-consumer-key: "linter-consumer-key"
+    linter-producer-key: "linter-producer-key"
 
-# groupIds to be used by consumers
-groups:
-  product: "productcreated"
+  # groupIds to be used by consumers
+  # facilita que múltiples consumidores puedan leer desde el mismo stream sin procesar los mismos mensajes más de una vez.
+  # Si están agrupados se puede coordinar la lectura
+  groups:
+    lint: "lint-group"

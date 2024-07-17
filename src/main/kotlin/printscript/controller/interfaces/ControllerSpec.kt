@@ -31,7 +31,7 @@ interface ControllerSpec {
         ]
     )
     // I think maybe it should recieve a MultiPartFile instead of a Json
-    fun lint(@RequestParam version: String, @RequestParam("file") file: MultipartFile, @RequestParam config: MultipartFile): ResponseEntity<String>
+    fun lint(@RequestParam version: String, @RequestParam("file") file: String, @RequestParam config: String): ResponseEntity<String>
 
     @PostMapping("/execute")
     @Operation(

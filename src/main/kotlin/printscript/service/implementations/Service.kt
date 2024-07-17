@@ -28,13 +28,18 @@ class Service : ServiceInterface {
     private val logger: Logger = LoggerFactory.getLogger(Service::class.java)
 
     // si recibiese un stream hacer prácticamente lo mismo que lo que hace el execute. Por el momento recibe un file.
-    override fun lint(version: String, file: MultipartFile, config: MultipartFile): ResponseEntity<String> {
+    override fun lint(version: String, file: String, config: String): ResponseEntity<String> {
         logger.info("Linting Code")
-        val reader = LinterConfigReader().getReader(getExtension(config)).getOrElse {
+
+        val reader = LinterConfigReader().getReader("json").getOrElse {
             logger.error("Error at creating reader for linter: ", it)
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(it.message)
         }
-        val tempConfigFile = createConfigTempFile(config)
+
+        val tempFile = createConfigTempFile(file, "ps")
+        val tempConfigFile = createConfigTempFile(config, "json")
+        // logger.info("Config file: $tempConfigFile")
+
         val configurations =
             reader.readFileAndBuildRules(tempConfigFile).getOrElse {
                 logger.error("Error at building configurations for linter: ", it)
@@ -42,7 +47,7 @@ class Service : ServiceInterface {
             }
 
         val rules = translateFormatterConfigurationToRules(configurations)
-        val scope = lexAndParse(file, version).getOrElse {
+        val scope = lexAndParse(tempFile, version).getOrElse {
             logger.error("Error at lexing and parsing file", it)
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(it.message)
         }
@@ -134,10 +139,29 @@ class Service : ServiceInterface {
     }
 
 
+    private fun createConfigTempFile(config: String, extension: String): File {
+        val tempFile = File.createTempFile("config", ".$extension")
+        tempFile.writeText(config)
+        return tempFile
+    }
+
+
     fun lexAndParse(file: MultipartFile, version: String): Result<Scope> {
         val lexer = LexerFactoryImpl(version).create()
         val parser = MyParser()
         val text = file.inputStream.bufferedReader().readText()
+        val tokens = lexer.tokenize(text)
+        val ast = parser.parseTokens(tokens).getOrElse {
+            return Result.failure(it)
+        }
+        return Result.success(ast)
+    }
+
+    fun lexAndParse(file: File, version: String): Result<Scope> {
+        val lexer = LexerFactoryImpl(version).create()
+        val parser = MyParser()
+        val text = file.inputStream().bufferedReader().use { it.readText() }
+        logger.info(text)
         val tokens = lexer.tokenize(text)
         val ast = parser.parseTokens(tokens).getOrElse {
             return Result.failure(it)
