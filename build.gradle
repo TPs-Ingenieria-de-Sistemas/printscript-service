@@ -14,8 +14,8 @@ repositories {
         name = "GitHubPackages"
         url = uri("https://maven.pkg.github.com/SantiPe02/printscript")
         credentials {
-            username = project.findProperty("GITHUB_ACTOR") ?: System.getenv("GH_USER")
-            password = project.findProperty("GITHUB_TOKEN") ?: System.getenv("GH_PAT")
+            username = project.findProperty("GH_PAT") ?: System.getenv("USERNAME")
+            password = project.findProperty("GH_PAT") ?: System.getenv("TOKEN")
         }
     }
 
@@ -23,8 +23,8 @@ repositories {
         name = "GitHubPackagesClassRedisStreams"
         url = uri("https://maven.pkg.github.com/austral-ingsis/class-redis-streams")
         credentials {
-            username = project.findProperty("GITHUB_ACTOR") ?: System.getenv("GH_USER")
-            password = project.findProperty("GITHUB_TOKEN") ?: System.getenv("GH_PAT")
+            username = project.findProperty("GH_PAT") ?: System.getenv("USERNAME")
+            password = project.findProperty("GH_PAT") ?: System.getenv("TOKEN")
         }
     }
 }
