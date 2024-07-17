@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: printscript-service
+springdoc:
+  swagger-ui:
+    enabled: true
+    path: "/swagger-ui.html"
+  api-docs:
+    enabled: true
+    path: "/docs"

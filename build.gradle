@@ -2,6 +2,22 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.3.0'
     id 'io.spring.dependency-management' version '1.1.5'
+    id 'org.jetbrains.kotlin.jvm' version '1.9.23'
+    id 'org.jetbrains.kotlin.plugin.spring' version '1.9.23'
+    id 'application'
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven {
+        name = "GitHubPackages"
+        url = uri("https://maven.pkg.github.com/SantiPe02/printscript")
+        credentials {
+            username = project.findProperty("gpr.user") ?: System.getenv("USERNAME")
+            password = project.findProperty("gpr.key") ?: System.getenv("TOKEN")
+        }
+    }
 }
 
 group = 'com.example'
@@ -13,16 +29,48 @@ java {
     }
 }
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+
+    // Swagger dependencies
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-api:2.5.0'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0'
+
+    // Printscript dependencies
+    implementation 'com.github.SantiPe02:interpreter:1.1.0-SNAPSHOT'
+    implementation 'com.github.SantiPe02:lexer:1.1.0-SNAPSHOT'
+    implementation 'com.github.SantiPe02:parser:1.1.0-SNAPSHOT'
+    implementation 'com.github.SantiPe02:linter:1.1.0-SNAPSHOT'
+    implementation 'com.github.SantiPe02:formatter:1.1.0-SNAPSHOT'
+    implementation 'com.github.SantiPe02:cli:1.1.0-SNAPSHOT'
+    implementation 'com.github.SantiPe02:ast:1.1.0-SNAPSHOT'
+    implementation 'com.github.SantiPe02:largefilereading:1.1.0-SNAPSHOT'
+
+    // Clikt dependency
+    implementation 'com.github.ajalt.clikt:clikt:4.2.0'
 }
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+application {
+    mainClassName = 'com.example.printscriptservice.PrintscriptServiceApplicationKt'
+}
+
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+tasks.register("installGitHooks", Copy) {
+    from new File(rootProject.rootDir, "hook/pre-commit")
+    into { new File(rootProject.rootDir, ".git/hooks") }
+}
+
+tasks.named("build") {
+    dependsOn("installGitHooks")
 }
