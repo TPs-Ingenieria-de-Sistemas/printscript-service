@@ -17,8 +17,6 @@ import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Component
 import java.time.Duration
 
-@Component
-@Profile("!test")
 class LinterEventsConsumer(
     redis: ReactiveRedisTemplate<String, String>,
     @Value("\${redis.stream.linter-consumer-key}") streamKey: String,
