@@ -11,3 +11,11 @@ services:
     environment:
       NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
       NEW_RELIC_APP_NAME: ${NEW_RELIC_APP_NAME}
+      REDIS_HOST: event-bus
+      REDIS_PORT: 6379
+
+  redis:
+    container_name: "redis-stream"
+    image: redis:6-alpine
+    ports:
+      - "6379:6379"

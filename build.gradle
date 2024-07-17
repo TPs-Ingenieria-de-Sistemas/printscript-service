@@ -14,8 +14,8 @@ repositories {
         name = "GitHubPackages"
         url = uri("https://maven.pkg.github.com/SantiPe02/printscript")
         credentials {
-            username = project.findProperty("gpr.user") ?: System.getenv("USERNAME")
-            password = project.findProperty("gpr.key") ?: System.getenv("TOKEN")
+            username = project.findProperty("GITHUB_ACTOR") ?: System.getenv("USERNAME")
+            password = project.findProperty("GITHUB_TOKEN") ?: System.getenv("TOKEN")
         }
     }
 }
@@ -34,6 +34,13 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // Redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-reactor'
+    implementation 'org.jetbrains.kotlin:kotlin-reflect'
+
+
 
 
     // Swagger dependencies
@@ -60,6 +67,11 @@ tasks.named('test') {
 application {
     mainClassName = 'com.example.printscriptservice.PrintscriptServiceApplicationKt'
 }
+
+bootJar {
+    archiveFileName = "${archiveBaseName.get()}.${archiveExtension.get()}"
+}
+
 
 
 tasks.named('test') {
