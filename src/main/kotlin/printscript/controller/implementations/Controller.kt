@@ -1,7 +1,6 @@
 package com.example.printscriptservice.printscript.controller.implementations
 
 import com.example.printscriptservice.printscript.controller.interfaces.ControllerSpec
-import com.example.printscriptservice.printscript.model.LintInput
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
