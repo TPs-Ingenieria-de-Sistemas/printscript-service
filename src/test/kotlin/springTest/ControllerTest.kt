@@ -9,9 +9,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension
 @ExtendWith(SpringExtension::class)
 @AutoConfigureWebTestClient
 class ControllerTest {
-
-    private val BASE = "/command"
-
+    private val base = "/command"
 
     /*fun `should return linted file`() {
         val uri = mintUri("commands", "basic-command.ps")

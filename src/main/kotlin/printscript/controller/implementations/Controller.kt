@@ -3,21 +3,20 @@ package com.example.printscriptservice.printscript.controller.implementations
 import com.example.printscriptservice.printscript.controller.interfaces.ControllerSpec
 import com.example.printscriptservice.printscript.model.ExecuteInput
 import com.example.printscriptservice.printscript.model.FormatterInput
+import com.example.printscriptservice.printscript.service.implementations.Service
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.multipart.MultipartFile
-import com.example.printscriptservice.printscript.service.implementations.Service
-import interpreter.Interpreter
-import java.io.BufferedInputStream
-
 
 @RestController
 class Controller : ControllerSpec {
-
-    val service = Service();
+    val service = Service()
 
     // Como no sé si el snippet service soporta el List<WarningResult> que devuelve el linter, lo mando como String.
-    override fun lint(version: String, file: String, config: String): ResponseEntity<String>  {
+    override fun lint(
+        version: String,
+        file: String,
+        config: String,
+    ): ResponseEntity<String> {
         return service.lint(version, file, config)
     }
 
