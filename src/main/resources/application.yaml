@@ -1,7 +1,6 @@
-server:
-  port: 8083 # THEY BOTH RUN ON THE SAME PORT, DUNNO HOW GOOD IS THAT
-
 # redis host and port parameters
+server:
+  port: 8083
 spring:
   data:
     redis:
@@ -11,20 +10,12 @@ spring:
   application:
     name: printscript-service
 
-springdoc:
-  swagger-ui:
-    enabled: true
-    path: "/swagger-ui.html"
-  api-docs:
-    enabled: true
-    path: "/docs"
-
 # streamKeys to be used by producers
 # claves usadas para acceder a los diferentes streams.
 redis:
   stream:
-    linter-consumer-key: "linter-consumer-key"
-    linter-producer-key: "linter-producer-key"
+    linter-request-key: "linter-request-key"
+    linter-response-key: "linter-response-key"
 
   # groupIds to be used by consumers
   # facilita que múltiples consumidores puedan leer desde el mismo stream sin procesar los mismos mensajes más de una vez.

@@ -27,6 +27,15 @@ repositories {
             password = project.findProperty("GH_PAT") ?: System.getenv("TOKEN")
         }
     }
+
+    maven {
+        name = "GitHubPackages"
+        url = uri("https://maven.pkg.github.com/TPs-Ingenieria-de-Sistemas/redis-events")
+        credentials {
+            username = project.findProperty("GH_USER") ?: System.getenv("USERNAME")
+            password = project.findProperty("GH_PAT") ?: System.getenv("TOKEN")
+        }
+    }
 }
 
 group = 'com.example'
@@ -50,23 +59,17 @@ dependencies {
     implementation 'org.jetbrains.kotlin:kotlin-reflect'
     implementation 'org.austral.ingsis:redis-streams-flux:0.1.13'
 
-
-    // Swagger dependencies
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-api:2.5.0'
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0'
-
     // Printscript dependencies
     implementation 'com.github.SantiPe02:interpreter:1.1.0-SNAPSHOT'
     implementation 'com.github.SantiPe02:lexer:1.1.0-SNAPSHOT'
     implementation 'com.github.SantiPe02:parser:1.1.0-SNAPSHOT'
     implementation 'com.github.SantiPe02:linter:1.1.0-SNAPSHOT'
     implementation 'com.github.SantiPe02:formatter:1.1.0-SNAPSHOT'
-    implementation 'com.github.SantiPe02:cli:1.1.0-SNAPSHOT'
     implementation 'com.github.SantiPe02:ast:1.1.0-SNAPSHOT'
     implementation 'com.github.SantiPe02:largefilereading:1.1.0-SNAPSHOT'
 
-    // Clikt dependency
-    implementation 'com.github.ajalt.clikt:clikt:4.2.0'
+    // redis-events
+    implementation 'com.example:redis-events:0.1.0-SNAPSHOT'
 }
 
 tasks.named('test') {

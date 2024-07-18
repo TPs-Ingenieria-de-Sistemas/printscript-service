@@ -21,12 +21,13 @@ import stringReader.PartialStringReadingLexer
 import translateFormatterConfigurationToRules
 import java.io.BufferedInputStream
 import java.io.File
+import java.io.IOException
 import java.nio.charset.Charset
 import configurationReader.ConfigurationReaderProvider as LinterConfigReader
 
+public val logger: Logger = LoggerFactory.getLogger(Service::class.java)
+
 class Service : ServiceInterface {
-    // Y si al logger lo pongo fuera de la clase, como variable global???
-    private val logger: Logger = LoggerFactory.getLogger(Service::class.java)
 
     // si recibiese un stream hacer prácticamente lo mismo que lo que hace el execute. Por el momento recibe un file.
     override fun lint(
@@ -76,41 +77,58 @@ class Service : ServiceInterface {
         envs: List<EnvVar>,
         inputs: List<String>,
     ): ResponseEntity<String> {
-        val interpreter: Interpreter =
-            interpretFile(version, file, inputs, envs).getOrElse {
-                logger.error("Error at interpreting file", it)
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(it.message)
-            }
-        logger.info("getting report")
-        val report = interpreter.report
-        val response = StringBuilder()
-        report.outputs.forEach { out -> response.append(out).append("\n") }
+        // Configurar las variables de entorno para la nueva JVM
+        val envMap = envs.associate { it.name to it.value }
+        val envVars = envMap.entries.joinToString(" ") { (key, value) -> "$key=$value" }
 
-        if (report.errors.isNotEmpty()) {
-            return ResponseEntity.status(
-                HttpStatus.INTERNAL_SERVER_ERROR,
-            ).body(
-                "Found errors in while executing:\n" +
-                    report.errors.joinToString("\n") {
-                        it
-                    },
-            )
+        val processBuilder = ProcessBuilder(
+            "java",
+            "-cp", System.getProperty("java.class.path"),
+            "com.example.printscriptservice.printscript.service.implementations.CreateJVMWithEnvKt",
+            version,
+            file
+        ).apply {
+            environment().putAll(envMap)
+            inputs.forEach { environment()["INPUT"] = it }
         }
 
-        return ResponseEntity.ok(response.toString())
+        val env = processBuilder.environment()
+        for (e in envs) {
+            env[e.name] = e.value
+        }
+        logger.info("Added Env Vars")
+        return try {
+            val process = processBuilder.start()
+            val output = process.inputStream.bufferedReader().readText()
+            val errors = process.errorStream.bufferedReader().readText()
+            val exitCode = process.waitFor()
+
+            if (exitCode != 0) {
+                logger.error("Error ejecutando el código: $errors")
+                ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error ejecutando el código:\n$errors")
+            } else {
+                ResponseEntity.ok(output)
+            }
+        } catch (e: IOException) {
+            logger.error("Error al iniciar el proceso: ", e)
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al iniciar el proceso:\n${e.message}")
+        } catch (e: InterruptedException) {
+            logger.error("Proceso interrumpido: ", e)
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Proceso interrumpido:\n${e.message}")
+        }
     }
+
 
     fun interpretFile(
         version: String,
         file: String,
         inputs: List<String>,
-        envs: List<EnvVar>,
     ): Result<Interpreter> {
         logger.info("interpretingFile")
         val tempFile = createConfigTempFile(file, "ps")
         tempFile.inputStream().buffered().use { stream ->
             tempFile.delete()
-            return interpretStream(version, stream, inputs, envs)
+            return interpretStream(version, stream, inputs)
         }
     }
 
@@ -118,7 +136,6 @@ class Service : ServiceInterface {
         version: String,
         stream: BufferedInputStream,
         inputs: List<String>,
-        envs: List<EnvVar> = emptyList(),
     ): Result<Interpreter> {
         logger.info("Executing snippet")
         val lexer = LexerFactoryImpl(version).create()

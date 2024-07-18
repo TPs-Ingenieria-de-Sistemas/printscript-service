@@ -17,7 +17,7 @@ import java.time.Duration
 
 class LinterEventsConsumer(
     redis: ReactiveRedisTemplate<String, String>,
-    @Value("\${redis.stream.linter-consumer-key}") streamKey: String,
+    @Value("\${redis.stream.linter-request-key}") streamKey: String,
     @Value("\${groups.lint}") groupId: String,
     private val printscriptService: Service,
     private val producer: LinterEventsProducer,

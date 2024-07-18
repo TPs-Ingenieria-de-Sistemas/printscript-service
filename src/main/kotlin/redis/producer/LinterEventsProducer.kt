@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component
 class LinterEventsProducer
     @Autowired
     constructor(
-        @Value("\${redis.stream.linter-producer-key}") streamKey: String,
+        @Value("\${redis.stream.linter-response-key}") streamKey: String,
         redis: ReactiveRedisTemplate<String, String>,
     ) : RedisStreamProducer(streamKey, redis) {
         // WOULD BE BETTER IF IT USED SUSPEND?
