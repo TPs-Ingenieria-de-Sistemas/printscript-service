@@ -1,6 +1,8 @@
 package com.example.printscriptservice.printscript.controller.implementations
 
 import com.example.printscriptservice.printscript.controller.interfaces.ControllerSpec
+import com.example.printscriptservice.printscript.model.ExecuteInput
+import com.example.printscriptservice.printscript.model.FormatterInput
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
@@ -20,11 +22,11 @@ class Controller : ControllerSpec {
     }
 
     // todo: it recieves a Stream, but could recieve a String and we turn it into a stream inside here.
-    override fun execute(version: String, stream: BufferedInputStream): ResponseEntity<Interpreter> {
-        return service.execute(version, stream)
+    override fun execute(input: ExecuteInput): ResponseEntity<String> {
+        return service.execute(input.version, input.file, input.envs, input.inputs)
     }
 
-    override fun format(version: String, file: MultipartFile, config: MultipartFile): ResponseEntity<String> {
-        return service.format(version, file, config)
+    override fun format(input: FormatterInput): ResponseEntity<String> {
+        return service.format(input.version, input.file, input.config)
     }
 }

@@ -27,21 +27,26 @@ class ServiceTest {
         val result = service.lint("1.1", snippet, json)
         assertTrue(result.statusCode.is2xxSuccessful)
     }
-    /*
+/*
     @Test
     fun testExecute() {
-        val file = getFile("src/test/resources/test.ps")
+        val file = aux.getFile("src/test/resources/test.ps")
         val result = service.execute("1.1", file.inputStream.buffered())
-        assertTrue(result.body!!.contains("Execution finished"))
+        */
+/*assertTrue(result.body!!.("Execution finished")) // ???*//*
+
     }
+*/
+/*
 
     @Test
     fun testFormat() {
-        val file = getFile("src/test/resources/test.ps")
-        val config = getFile("src/test/resources/testConfig.ps")
+        val file = aux.getFile("src/test/resources/test.ps")
+        val config = aux.getFile("src/test/resources/testConfig.ps")
         val result = service.format("1.1", file, config)
         assertTrue(result.body!!.contains("Code formatted successfully"))
-    }*/
+    }
+*/
 
 
 

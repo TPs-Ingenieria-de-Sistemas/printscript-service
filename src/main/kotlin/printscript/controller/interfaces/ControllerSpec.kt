@@ -1,6 +1,8 @@
 // VERY IMPORTANT TO BE IN THIS PACKAGE
 package com.example.printscriptservice.printscript.controller.interfaces
 
+import com.example.printscriptservice.printscript.model.ExecuteInput
+import com.example.printscriptservice.printscript.model.FormatterInput
 import interpreter.Interpreter
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
@@ -40,11 +42,11 @@ interface ControllerSpec {
             ApiResponse(
                 responseCode = "200",
                 description = "Execution completed",
-                content = [Content(mediaType = "text/plain", schema = Schema(type = "string"))]
+                content = [Content(mediaType = "application/json", schema = Schema(type = "string"))]
             )
         ]
     )
-    fun execute(@RequestParam version: String, @RequestParam("file") stream: BufferedInputStream): ResponseEntity<Interpreter>
+    fun execute(@RequestBody input: ExecuteInput): ResponseEntity<String>
 
     @PostMapping("/format")
     @Operation(
@@ -57,7 +59,7 @@ interface ControllerSpec {
             )
         ]
     )
-    fun format(@RequestParam version: String, @RequestParam("file") file: MultipartFile, @RequestParam config: MultipartFile): ResponseEntity<String>
+    fun format(@RequestBody input: FormatterInput): ResponseEntity<String>
 
 
 }
