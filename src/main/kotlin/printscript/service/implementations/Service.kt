@@ -13,9 +13,12 @@ import org.springframework.web.multipart.MultipartFile
 import java.io.File
 import java.nio.charset.Charset
 import ast.Scope
+import com.github.ajalt.clikt.core.CliktError
+import factory.InterpreterFactoryImpl
 import factory.LexerFactoryImpl
 import formater.astFormatter.ASTFormatter
 import formater.configurationReader.ConfigurationReaderProvider
+import interpreter.inputReaderImp.MockInputReader
 import configurationReader.ConfigurationReaderProvider as LinterConfigReader
 import parser.MyParser
 import result.validation.WarningResult
@@ -58,65 +61,100 @@ class Service : ServiceInterface {
             logger.info("Code linted successfully without any warnings")
             return ResponseEntity.ok("Code linted successfully without any warnings")
         }
+        tempFile.delete()
+        tempConfigFile.delete()
         return ResponseEntity.ok(output)
     }
 
 
+    override fun execute(version: String, file: String, envs: List<String>, inputs: List<String>): ResponseEntity<String>{
+
+        val interpreter: Interpreter = interpretFile(version, file, inputs).getOrElse {
+            logger.error("Error at interpreting file", it)
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(it.message)
+        }
+        logger.info("getting report")
+        val report = interpreter.report
+        val response = StringBuilder()
+        report.outputs.forEach { out -> response.append(out).append("\n") }
+
+        if (report.errors.isNotEmpty()) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Found errors in while executing:\n" + report.errors.joinToString("\n") { it })
+        }
+
+        return ResponseEntity.ok(response.toString())
+    }
+
+    fun interpretFile(version: String, file: String, inputs: List<String>):  Result<Interpreter>{
+        logger.info("interpretingFile")
+        val tempFile = createConfigTempFile(file, "ps")
+        tempFile.inputStream().buffered().use { stream ->
+            tempFile.delete()
+            return interpretStream(version, stream, inputs)
+        }
+
+    }
+
     // Basically the same method the CLI uses. We may, eventually, not receive BufferedInputStream but a different, similar, data type.
-    override fun execute(version: String, stream: BufferedInputStream): ResponseEntity<Interpreter> {
+    fun interpretStream(version: String, stream: BufferedInputStream, inputs: List<String>): Result<Interpreter> {
         logger.info("Executing snippet")
         val lexer = LexerFactoryImpl(version).create()
         val parser = MyParser()
-        var interpreter = Interpreter()
+        InterpreterFactoryImpl(version).create()
+        var interpreter = Interpreter(inputReader = MockInputReader(inputs))
         val buffer = ByteArray(1046)
         var bytesRead = stream.read(buffer)
         var tokenizer = PartialStringReadingLexer(lexer)
 
         while (bytesRead != -1) {
+            logger.info("Reading bytes")
             val textBlock = String(buffer, 0, bytesRead, Charset.defaultCharset())
             val tokenizerAndTokens = tokenizer.tokenizeString(textBlock)
             tokenizer = tokenizerAndTokens.first
             val tokens = tokenizerAndTokens.second
-
+            logger.info("Tokens: $tokens")
             val ast = parser.parseTokens(tokens).getOrElse {
                 logger.error("Error at parsing tokens", it)
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Interpreter())
+                return Result.failure(it)
             }
+            logger.info("parsed tokens")
             interpreter = interpreter.interpret(ast)
+            logger.info("interpreted")
             bytesRead = stream.read(buffer)
+
         }
         logger.info("Snippet executed successfully")
         stream.close()
-        return ResponseEntity.ok(interpreter)
+        return Result.success(interpreter)
     }
 
-    override fun format(version: String, file: MultipartFile, config: MultipartFile): ResponseEntity<String> {
+    override fun format(version: String, snippet: String, configStr: String): ResponseEntity<String> {
+
         logger.info("Formatting Code")
+        val file = createConfigTempFile(snippet, "ps")
+        val config = createConfigTempFile(configStr, "json")
         val lexer = LexerFactoryImpl(version).create()
-        val reader = ConfigurationReaderProvider().getReader(getExtension(config)).getOrElse {
+
+        val reader = ConfigurationReaderProvider().getReader("json").getOrElse {
             logger.error("Error at creating reader for formatter: ", it)
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(it.message)
         }
-        val tempConfigFile = createConfigTempFile(config)
         val configurations =
-            reader.readFileAndBuildRules(tempConfigFile).getOrElse {
+            reader.readFileAndBuildRules(config).getOrElse {
                 logger.error("Error at building configurations for formatter: ", it)
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(it.message)
             }
-        val code = file.inputStream.bufferedReader().readText();
+        val code = file.inputStream().bufferedReader().use { it.readText() }
         val formatter = ASTFormatter(lexer, MyParser(), configurations)
         val formattedCode = formatter.formatString(code)
 
-        tempConfigFile.delete()
+        file.delete()
+        config.delete()
         logger.info("Code formatted successfully")
         return ResponseEntity.ok(formattedCode)
     }
 
 
-
-    private fun getExtension(file: MultipartFile): String {
-        return file.originalFilename?.substringAfterLast(".") ?: ""
-    }
 
     private fun isOfExtension(file: MultipartFile, extension: String): Boolean {
         return file.originalFilename?.endsWith(extension) ?: false
