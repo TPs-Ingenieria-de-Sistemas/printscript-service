@@ -1,0 +1,23 @@
+server:
+  port: 8084
+
+spring:
+
+  application:
+    name: snippet-service
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: 6379
+
+redis:
+  stream:
+    linter-request-key: "linter-request-key"
+    linter-response-key: "linter-response-key"
+
+  # groupIds to be used by consumers
+  # facilita que múltiples consumidores puedan leer desde el mismo stream sin procesar los mismos mensajes más de una vez.
+  # Si están agrupados se puede coordinar la lectura
+  groups:
+    lint: "lint-group"
+

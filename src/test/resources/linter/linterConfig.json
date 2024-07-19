@@ -1,0 +1,6 @@
+{
+  "camelCase": false,
+  "printlnWithoutExpression": true,
+  "undeclaredVariableStatement": true,
+  "readInputWithoutExpression": true
+}
