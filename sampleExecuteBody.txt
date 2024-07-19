@@ -4,15 +4,3 @@
     "envs": [],
     "inputs": ["marado"]
 }
-----------------------------------------
-{
-    "version": "1.1",
-    "file": "readInput(\"Messi\");",
-    "envs": [
-        {
-            "name": "MESSI",
-            "value": "10"
-        }
-    ],
-    "inputs": []
-}

@@ -13,5 +13,5 @@ RUN mkdir /app
 ADD ./newrelic/newrelic.jar /usr/local/newrelic/newrelic.jar
 ADD ./newrelic/newrelic.yml /usr/local/newrelic/newrelic.yml
 
-COPY --from=build /app/build/libs/printscript-service-*.jar /app/printscript-service.jar
+COPY --from=build /app/build/libs/*.jar /app/printscript-service.jar
 ENTRYPOINT ["java", "-javaagent:/usr/local/newrelic/newrelic.jar", "-jar", "-Dspring.profiles.active=production","/app/printscript-service.jar"]

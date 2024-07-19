@@ -20,15 +20,6 @@ repositories {
     }
 
     maven {
-        name = "GitHubPackagesClassRedisStreams"
-        url = uri("https://maven.pkg.github.com/austral-ingsis/class-redis-streams")
-        credentials {
-            username = project.findProperty("GH_USER") ?: System.getenv("USERNAME")
-            password = project.findProperty("GH_PAT") ?: System.getenv("TOKEN")
-        }
-    }
-
-    maven {
         name = "GitHubPackages"
         url = uri("https://maven.pkg.github.com/TPs-Ingenieria-de-Sistemas/redis-events")
         credentials {
@@ -57,8 +48,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-reactor'
     implementation 'org.jetbrains.kotlin:kotlin-reflect'
-    implementation 'org.austral.ingsis:redis-streams-flux:0.1.13'
 
+    implementation 'javax.inject:javax.inject:1'
     // Printscript dependencies
     implementation 'com.github.SantiPe02:interpreter:1.1.0-SNAPSHOT'
     implementation 'com.github.SantiPe02:lexer:1.1.0-SNAPSHOT'
@@ -69,7 +60,7 @@ dependencies {
     implementation 'com.github.SantiPe02:largefilereading:1.1.0-SNAPSHOT'
 
     // redis-events
-    implementation 'com.example:redis-events:0.1.0-SNAPSHOT'
+    implementation 'com.example:redis-events:0.1.1-SNAPSHOT'
 }
 
 tasks.named('test') {

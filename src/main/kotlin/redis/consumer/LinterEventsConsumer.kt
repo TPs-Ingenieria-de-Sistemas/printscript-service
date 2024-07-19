@@ -5,24 +5,29 @@ import com.example.printscriptservice.printscript.service.implementations.Servic
 import com.example.printscriptservice.redis.producer.LinterEventsProducer
 import com.example.printscriptservice.redisEvents.LintRequestEvent
 import kotlinx.coroutines.runBlocking
-import org.austral.ingsis.redis.RedisStreamConsumer
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.redis.connection.stream.ObjectRecord
-import org.springframework.data.redis.core.ReactiveRedisTemplate
+import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.data.redis.stream.StreamReceiver
 import org.springframework.http.ResponseEntity
+import org.springframework.stereotype.Component
+import redisStreams.RedisStreamConsumer
 import java.time.Duration
 
-class LinterEventsConsumer(
-    redis: ReactiveRedisTemplate<String, String>,
+@Component
+class LinterEventsConsumer @Autowired constructor(
+    redis: RedisTemplate<String, String>,
     @Value("\${redis.stream.linter-request-key}") streamKey: String,
-    @Value("\${groups.lint}") groupId: String,
+    @Value("\${redis.groups.lint}") groupId: String,
     private val printscriptService: Service,
-    private val producer: LinterEventsProducer,
+    private val producer: LinterEventsProducer
 ) : RedisStreamConsumer<LintRequestEvent>(streamKey, groupId, redis) {
+
     private val logger: Logger = LoggerFactory.getLogger(Service::class.java)
+
 
     // Este método verifica cada 10 segundos. Dice que los mensajes se deserializarán en forma de LintRequestEvent
     override fun options(): StreamReceiver.StreamReceiverOptions<String, ObjectRecord<String, LintRequestEvent>> {

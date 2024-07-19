@@ -1,12 +1,12 @@
 # redis host and port parameters
 server:
   port: 8083
+
 spring:
   data:
     redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379} # Entiendo que la Aplicación corre en 8083 pero el server (¿database?) en 6379.
-
+      host: redis
+      port: 6379
   application:
     name: printscript-service
 

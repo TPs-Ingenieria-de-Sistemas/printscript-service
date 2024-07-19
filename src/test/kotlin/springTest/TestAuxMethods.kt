@@ -7,13 +7,12 @@ import java.nio.file.Paths
 
 class TestAuxMethods {
     fun accessAbsolutePath(path: String): String {
-        try {
+         try{
             return Paths.get(path).toAbsolutePath().toString()
-        } catch (e: Exception) {
+        } catch (e: Exception){
             throw IllegalArgumentException("Resource not found for: $path")
         }
     }
-
     fun createMultipartFile(filecontent: String): MultipartFile {
         val bytearray = filecontent.toByteArray()
         return MockMultipartFile("file", "file.ps", "text/plain", bytearray)
@@ -26,4 +25,5 @@ class TestAuxMethods {
         val content = Files.readAllBytes(file)
         return MockMultipartFile(filename, filename, contenttype, content)
     }
+
 }

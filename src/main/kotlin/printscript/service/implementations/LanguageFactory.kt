@@ -4,35 +4,36 @@ import Linter
 import MyLinter
 import factory.LexerFactoryImpl
 import interpreter.Interpreter
+import java.io.File
 import lexer.Lexer
 import parser.MyParser
 import parser.Parser
-import java.io.File
+
 
 // None of these are handling versions.
 class LanguageFactory(val language: String) {
+
+
     fun getLinter(): Linter {
         return when {
-            languageIsPrintScript() -> MyLinter()
+            languageIsPrintScript()-> MyLinter()
             else -> throw IllegalArgumentException("Language not supported")
         }
     }
 
     fun getInterpreter(): Interpreter {
-        return when {
+        return when{
             languageIsPrintScript() -> Interpreter()
             else -> throw IllegalArgumentException("Language not supported")
         }
     }
 
-    fun format(
-        file: String,
-        confifFile: File,
-    ): File {
+    fun format(file: String,
+               confifFile: File): File {
         when {
-            languageIsPrintScript() -> {
-                format(file, confifFile)
-                return File(file)
+            languageIsPrintScript()-> {
+                format(file, confifFile);
+                return File(file);
             }
             else -> throw IllegalArgumentException("Language not supported")
         }
@@ -58,4 +59,5 @@ class LanguageFactory(val language: String) {
             else -> false
         }
     }
+
 }
