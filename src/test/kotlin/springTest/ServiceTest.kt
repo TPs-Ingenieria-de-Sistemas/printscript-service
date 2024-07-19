@@ -4,6 +4,8 @@ import com.example.printscriptservice.printscript.service.implementations.Langua
 import com.example.printscriptservice.printscript.service.implementations.Service
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.springframework.http.ResponseEntity
+import java.io.BufferedReader
 import java.io.File
 
 
@@ -27,26 +29,25 @@ class ServiceTest {
         val result = service.lint("1.1", snippet, json)
         assertTrue(result.statusCode.is2xxSuccessful)
     }
-/*
     @Test
     fun testExecute() {
-        val file = aux.getFile("src/test/resources/test.ps")
-        val result = service.execute("1.1", file.inputStream.buffered())
-        */
-/*assertTrue(result.body!!.("Execution finished")) // ???*//*
-
+        val bufferedReader: BufferedReader = File("src/test/resources/code001.ps").bufferedReader()
+        val inputString = bufferedReader.use { it.readText() }
+        val result: ResponseEntity<String> = service.execute("1.1",  inputString, emptyList(), emptyList())
+        assertTrue(result.statusCode.is2xxSuccessful)
     }
-*/
-/*
+
 
     @Test
     fun testFormat() {
-        val file = aux.getFile("src/test/resources/test.ps")
-        val config = aux.getFile("src/test/resources/testConfig.ps")
-        val result = service.format("1.1", file, config)
-        assertTrue(result.body!!.contains("Code formatted successfully"))
+        val file: BufferedReader = File("src/test/resources/code001.ps").bufferedReader()
+        val config: BufferedReader = File("src/test/resources/formatter/formatterConfig.json").bufferedReader()
+        val inputString = file.use { it.readText() }
+        val configString = config.use { it.readText() }
+
+        val result = service.format("1.1", inputString, configString)
+        assertTrue(result.statusCode.is2xxSuccessful)
     }
-*/
 
 
 

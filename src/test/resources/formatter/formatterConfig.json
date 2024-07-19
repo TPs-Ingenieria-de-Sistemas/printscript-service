@@ -1,0 +1,7 @@
+{
+  "spaceBeforeColon": true,
+  "spaceAfterColon": true,
+  "spaceBeforeAndAfterEqual": true,
+  "lineJumpBeforePrintln": 1,
+  "indentation": 4
+}
