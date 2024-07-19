@@ -14,8 +14,8 @@ repositories {
         name = "GitHubPackages"
         url = uri("https://maven.pkg.github.com/SantiPe02/printscript")
         credentials {
-            username = project.findProperty("GH_USER") ?: System.getenv("GH_USER")
-            password = project.findProperty("GH_PAT") ?: System.getenv("GH_USER")
+            username = project.findProperty("GH_USER") ?: System.getenv("USERNAME")
+            password = project.findProperty("GH_PAT") ?: System.getenv("TOKEN")
         }
     }
 
@@ -23,8 +23,8 @@ repositories {
         name = "GitHubPackages"
         url = uri("https://maven.pkg.github.com/TPs-Ingenieria-de-Sistemas/redis-events")
         credentials {
-            username = project.findProperty("GH_USER") ?: System.getenv("GH_USER")
-            password = project.findProperty("GH_PAT") ?: System.getenv("GH_USER")
+            username = project.findProperty("GH_USER") ?: System.getenv("USERNAME")
+            password = project.findProperty("GH_PAT") ?: System.getenv("TOKEN")
         }
     }
 }
