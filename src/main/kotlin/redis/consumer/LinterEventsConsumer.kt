@@ -5,24 +5,25 @@ import com.example.printscriptservice.printscript.service.implementations.Servic
 import com.example.printscriptservice.redis.producer.LinterEventsProducer
 import com.example.printscriptservice.redisEvents.LintRequestEvent
 import kotlinx.coroutines.runBlocking
-import org.springframework.beans.factory.annotation.Value
-import org.springframework.data.redis.core.ReactiveRedisTemplate
-import org.austral.ingsis.redis.RedisStreamConsumer
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.context.annotation.Profile
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.redis.connection.stream.ObjectRecord
+import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.data.redis.stream.StreamReceiver
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Component
+import redisStreams.RedisStreamConsumer
 import java.time.Duration
 
-class LinterEventsConsumer(
-    redis: ReactiveRedisTemplate<String, String>,
-    @Value("\${redis.stream.linter-consumer-key}") streamKey: String,
-    @Value("\${groups.lint}") groupId: String,
+@Component
+class LinterEventsConsumer @Autowired constructor(
+    redis: RedisTemplate<String, String>,
+    @Value("\${redis.stream.linter-request-key}") streamKey: String,
+    @Value("\${redis.groups.lint}") groupId: String,
     private val printscriptService: Service,
-    private val producer: LinterEventsProducer,
+    private val producer: LinterEventsProducer
 ) : RedisStreamConsumer<LintRequestEvent>(streamKey, groupId, redis) {
 
     private val logger: Logger = LoggerFactory.getLogger(Service::class.java)
@@ -30,17 +31,20 @@ class LinterEventsConsumer(
 
     // Este método verifica cada 10 segundos. Dice que los mensajes se deserializarán en forma de LintRequestEvent
     override fun options(): StreamReceiver.StreamReceiverOptions<String, ObjectRecord<String, LintRequestEvent>> {
+        logger.info("OPTIONS")
         return StreamReceiver.StreamReceiverOptions.builder()
             .pollTimeout(Duration.ofMillis(10000)) // Set poll rate
             .targetType(LintRequestEvent::class.java) // Set type to de-serialize record
-            .build();
+            .build()
     }
 
     // Cada vez que llega un request.
+    // meter un if("printscript")...
     override fun onMessage(record: ObjectRecord<String, LintRequestEvent>) {
         logger.info("Received Message from Redis")
         val req = record.value
-        val assetSer = MockedAssetService("url")
+        println(req.userID + " " + req.snippetID + " " + req.rules + " " + req.language + " " + req.version)
+        val assetSer = MockedAssetService("http://localhost:8080/snippets")
         val snippet = assetSer.getSnippet(req.snippetID)
 
         logger.info("Linting Request")
@@ -51,9 +55,9 @@ class LinterEventsConsumer(
             runBlocking {
                 lintRes.body?.let {
                     producer.publishEvent(req.userID, req.snippetID, it)
-                    logger.info("Lint result: {user id: ${req.userID}}, {snippetId: ${req.snippetID}}, result: ${it}}")
+                    logger.info("Lint result: {user id: ${req.userID}}, {snippetId: ${req.snippetID}}, result: $it}")
                 }
-                if(bodyIsEmpty(lintRes)){
+                if (bodyIsEmpty(lintRes)) {
                     producer.publishEvent(req.userID, req.snippetID, "")
                     logger.info("Lint result: {user id: ${req.userID}}, {snippetId: ${req.snippetID}}, result: ...")
                 }
@@ -61,14 +65,12 @@ class LinterEventsConsumer(
         } else {
             logger.warn("Lint Failed")
             runBlocking {
-            producer.publishEvent(req.userID, req.snippetID, "Unknown error while linting")
+                producer.publishEvent(req.userID, req.snippetID, "Unknown error while linting")
             }
         }
     }
 
-    private fun bodyIsEmpty(response: ResponseEntity<String>): Boolean{
+    private fun bodyIsEmpty(response: ResponseEntity<String>): Boolean {
         return response.body.isNullOrEmpty()
     }
-
-
 }

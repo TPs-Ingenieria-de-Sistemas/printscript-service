@@ -13,7 +13,6 @@ import org.springframework.web.multipart.MultipartFile
 import java.io.File
 import java.nio.charset.Charset
 import ast.Scope
-import com.github.ajalt.clikt.core.CliktError
 import factory.InterpreterFactoryImpl
 import factory.LexerFactoryImpl
 import formater.astFormatter.ASTFormatter
@@ -25,6 +24,7 @@ import result.validation.WarningResult
 import translateFormatterConfigurationToRules
 
 
+@org.springframework.stereotype.Service
 class Service : ServiceInterface {
 
     // Y si al logger lo pongo fuera de la clase, como variable global???

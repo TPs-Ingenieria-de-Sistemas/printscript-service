@@ -1,33 +1,23 @@
 server:
-  port: 8083 # THEY BOTH RUN ON THE SAME PORT, DUNNO HOW GOOD IS THAT
+  port: 8084
 
-# redis host and port parameters
 spring:
+
+  application:
+    name: snippet-service
   data:
     redis:
       host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379} # Entiendo que la Aplicación corre en 8083 pero el server (¿database?) en 6379.
+      port: 6379
 
-  application:
-    name: printscript-service
-
-springdoc:
-  swagger-ui:
-    enabled: true
-    path: "/swagger-ui.html"
-  api-docs:
-    enabled: true
-    path: "/docs"
-
-# streamKeys to be used by producers
-# claves usadas para acceder a los diferentes streams.
 redis:
   stream:
-    linter-consumer-key: "linter-consumer-key"
-    linter-producer-key: "linter-producer-key"
+    linter-request-key: "linter-request-key"
+    linter-response-key: "linter-response-key"
 
   # groupIds to be used by consumers
   # facilita que múltiples consumidores puedan leer desde el mismo stream sin procesar los mismos mensajes más de una vez.
   # Si están agrupados se puede coordinar la lectura
   groups:
     lint: "lint-group"
+

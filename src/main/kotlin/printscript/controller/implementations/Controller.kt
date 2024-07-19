@@ -5,11 +5,7 @@ import com.example.printscriptservice.printscript.model.ExecuteInput
 import com.example.printscriptservice.printscript.model.FormatterInput
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.multipart.MultipartFile
 import com.example.printscriptservice.printscript.service.implementations.Service
-import interpreter.Interpreter
-import java.io.BufferedInputStream
-
 
 @RestController
 class Controller : ControllerSpec {
