@@ -7,14 +7,13 @@ services:
     build:
       context: .
     ports:
-      - "8083:8083"
+      - "8084:8084"
     environment:
       NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
       NEW_RELIC_APP_NAME: ${NEW_RELIC_APP_NAME}
       REDIS_HOST: redis # O local host??
       REDIS_PORT: 6379
 
-#ES VERDADERAMENTE NECESARIO ESTO? calculo q sí.
   redis:
     container_name: "redis-stream"
     image: redis:6-alpine

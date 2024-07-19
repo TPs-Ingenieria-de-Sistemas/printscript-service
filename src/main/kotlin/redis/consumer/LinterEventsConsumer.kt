@@ -31,6 +31,7 @@ class LinterEventsConsumer @Autowired constructor(
 
     // Este método verifica cada 10 segundos. Dice que los mensajes se deserializarán en forma de LintRequestEvent
     override fun options(): StreamReceiver.StreamReceiverOptions<String, ObjectRecord<String, LintRequestEvent>> {
+        logger.info("OPTIONS")
         return StreamReceiver.StreamReceiverOptions.builder()
             .pollTimeout(Duration.ofMillis(10000)) // Set poll rate
             .targetType(LintRequestEvent::class.java) // Set type to de-serialize record
@@ -38,10 +39,12 @@ class LinterEventsConsumer @Autowired constructor(
     }
 
     // Cada vez que llega un request.
+    // meter un if("printscript")...
     override fun onMessage(record: ObjectRecord<String, LintRequestEvent>) {
         logger.info("Received Message from Redis")
         val req = record.value
-        val assetSer = MockedAssetService("url")
+        println(req.userID + " " + req.snippetID + " " + req.rules + " " + req.language + " " + req.version)
+        val assetSer = MockedAssetService("http://localhost:8080/snippets")
         val snippet = assetSer.getSnippet(req.snippetID)
 
         logger.info("Linting Request")
