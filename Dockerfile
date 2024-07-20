@@ -10,6 +10,9 @@ ARG GH_PAT
 # Set the environment variables for the build process
 ENV GH_USER=${GH_USER}
 ENV GH_PAT=${GH_PAT}
+
+ENV USERNAME=${GH_USER}
+ENV TOKEN=${GH_PAT}
 RUN ./gradlew bootJar
 
 FROM eclipse-temurin:17-jre-jammy
