@@ -12,7 +12,7 @@ ENV USERNAME=${GH_USER}
 ENV TOKEN=${GH_PAT}
 
 RUN echo "boca"
-RUN echo "user: ${USERNAME}"
+RUN echo "user: ${GH_USER}"
 RUN ./gradlew bootJar
 
 FROM eclipse-temurin:17-jre-jammy
