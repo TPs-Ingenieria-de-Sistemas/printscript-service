@@ -8,6 +8,10 @@ on:
 jobs:
   build_and_publish:
     runs-on: ubuntu-latest
+    env:
+      GH_USER: ${{ secrets.GH_USER }}
+      GH_PAT: ${{ secrets.GH_PAT }}
+      
     steps:
       - uses: actions/checkout@v4
       - name: Extract gradle proyect vesrion and name 
