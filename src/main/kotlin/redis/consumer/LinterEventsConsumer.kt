@@ -1,5 +1,6 @@
 package com.example.printscriptservice.redis.consumer
 
+import com.example.printscriptservice.assetService.AssetService
 import com.example.printscriptservice.assetService.MockedAssetService
 import com.example.printscriptservice.printscript.service.implementations.Service
 import com.example.printscriptservice.redis.producer.LinterEventsProducer
@@ -23,6 +24,7 @@ class LinterEventsConsumer @Autowired constructor(
     @Value("\${redis.stream.linter-request-key}") streamKey: String,
     @Value("\${redis.groups.lint}") groupId: String,
     private val printscriptService: Service,
+
     private val producer: LinterEventsProducer
 ) : RedisStreamConsumer<LintRequestEvent>(streamKey, groupId, redis) {
 
@@ -39,38 +41,63 @@ class LinterEventsConsumer @Autowired constructor(
     }
 
     // Cada vez que llega un request.
-    // meter un if("printscript")...
     override fun onMessage(record: ObjectRecord<String, LintRequestEvent>) {
+
         logger.info("Received Message from Redis")
         val req = record.value
         println(req.userID + " " + req.snippetID + " " + req.rules + " " + req.language + " " + req.version)
-        val assetSer = MockedAssetService("http://localhost:8080/snippets")
-        val snippet = assetSer.getSnippet(req.snippetID)
+        val assetSer = AssetService("http://localhost:8081/snippets")
+        /*val assetSer = MockedAssetService("http://localhost:8082/snippets/configurations")*/
+        val snippet = assetSer.getSnippet(req.userID, req.snippetName)
 
-        logger.info("Linting Request")
-        val lintRes: ResponseEntity<String> = printscriptService.lint(req.version, snippet, req.rules)
-
-        if (lintRes.statusCode.is2xxSuccessful) {
-            logger.info("Lint passed")
-            runBlocking {
-                lintRes.body?.let {
-                    producer.publishEvent(req.userID, req.snippetID, it)
-                    logger.info("Lint result: {user id: ${req.userID}}, {snippetId: ${req.snippetID}}, result: $it}")
-                }
-                if (bodyIsEmpty(lintRes)) {
-                    producer.publishEvent(req.userID, req.snippetID, "")
-                    logger.info("Lint result: {user id: ${req.userID}}, {snippetId: ${req.snippetID}}, result: ...")
+        snippet.onFailure {
+            e ->
+            run {
+                logger.error("Error while getting snippet for linting: $e")
+                runBlocking {
+                    producer.publishEvent(req.userID, req.snippetID, "$e")
                 }
             }
-        } else {
-            logger.warn("Lint Failed")
-            runBlocking {
-                producer.publishEvent(req.userID, req.snippetID, "Unknown error while linting")
+        }.onSuccess {
+            logger.info("Linting Request")
+            val lintRes: ResponseEntity<String> = printscriptService.lint(req.version, it, req.rules)
+
+            if(!isPrintscript(req.language)){
+                logger.warn("Unknown language")
+                runBlocking {
+                    producer.publishEvent(req.userID, req.snippetID, "Unknown language")
+                }
+            }
+            else if (lintRes.statusCode.is2xxSuccessful) {
+                logger.info("Lint passed")
+                runBlocking {
+                    lintRes.body?.let {
+                        producer.publishEvent(req.userID, req.snippetID, it)
+                        logger.info("Lint result: {user id: ${req.userID}}, {snippetId: ${req.snippetID}}, result: $it}")
+                    }
+                    if (bodyIsEmpty(lintRes)) {
+                        producer.publishEvent(req.userID, req.snippetID, "")
+                        logger.info("Lint result: {user id: ${req.userID}}, {snippetId: ${req.snippetID}}, result: ...")
+                    }
+                }
+            } else {
+                logger.warn("Lint Failed")
+                runBlocking {
+                    producer.publishEvent(req.userID, req.snippetID, "Unknown error while linting")
+                }
             }
         }
     }
 
     private fun bodyIsEmpty(response: ResponseEntity<String>): Boolean {
         return response.body.isNullOrEmpty()
+    }
+
+    private fun isPrintscript(language: String): Boolean
+    {
+        return when (language) {
+            "printscript", "ps", "PrintScript", "printScript" -> true
+            else -> false
+        }
     }
 }

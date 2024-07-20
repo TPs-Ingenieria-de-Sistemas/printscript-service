@@ -1,6 +1,6 @@
 package springTest
 
-import com.example.printscriptservice.printscript.service.implementations.LanguageFactory
+import com.example.printscriptservice.redis.consumer.LanguageFactory
 import com.example.printscriptservice.printscript.service.implementations.Service
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test

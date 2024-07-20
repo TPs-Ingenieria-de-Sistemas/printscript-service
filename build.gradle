@@ -60,10 +60,13 @@ dependencies {
     implementation 'com.github.SantiPe02:largefilereading:1.1.0-SNAPSHOT'
 
     // redis-events
-    implementation 'com.example:redis-events:0.1.1-SNAPSHOT'
+    implementation 'com.example:redis-events:0.1.2-SNAPSHOT'
 
     // mocking test
     testImplementation 'io.mockk:mockk:1.13.2' // or the latest version
+
+    // used in AssetService
+    implementation "com.squareup.okhttp3:okhttp:4.9.3"
 }
 
 tasks.named('test') {
