@@ -3,9 +3,6 @@ FROM --platform=linux/amd64 gradle:8.7.0-jdk17-jammy AS build
 COPY  . /app
 WORKDIR /app
 RUN chmod +x gradlew
-# Define the build arguments
-ARG GH_USER
-ARG GH_PAT
 
 # Set the environment variables for the build process
 ENV GH_USER=${GH_USER}
