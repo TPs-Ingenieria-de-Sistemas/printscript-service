@@ -23,7 +23,7 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew build
         env:
-          GH_USER: ${{ secrets.GH_USER }}
-          GH_PAT: ${{ secrets.GH_PAT }}
+          GH_USER: ${{ secrets.USERNAME }}
+          GH_PAT: ${{ secrets.TOKEN }}
           USERNAME: ${{ secrets.GH_USER }}
           TOKEN: ${{ secrets.GH_PAT }}
