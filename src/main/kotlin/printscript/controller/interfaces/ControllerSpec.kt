@@ -22,13 +22,11 @@ interface ControllerSpec {
     ): ResponseEntity<String>
 
     @PostMapping("/execute")
-
     fun execute(
         @RequestBody input: ExecuteInput,
     ): ResponseEntity<String>
 
     @PostMapping("/format")
-
     fun format(
         @RequestBody input: FormatterInput,
     ): ResponseEntity<String>

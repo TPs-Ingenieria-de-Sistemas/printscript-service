@@ -6,7 +6,8 @@ import org.springframework.web.bind.annotation.RequestMapping
 
 @RequestMapping("/test")
 interface TestControllerSpec {
-    @PostMapping("/")
+
+    @PostMapping("/execute")
     fun testExecute(
         testCaseDTO: RunTestCaseDTO
     ): Boolean

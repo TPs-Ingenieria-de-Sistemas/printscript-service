@@ -13,7 +13,7 @@ fun main(args: Array<String>) {
 fun runInterpreter(args: Array<String>): List<String> {
     val version = args[0]
     val file = args[1]
-    val inputs = args.drop(2)
+    val inputs = args[2].split("\n")
 
     val envs = System.getenv().map { EnvVar(it.key, it.value) }
 
