@@ -5,6 +5,7 @@ plugins {
     id 'org.jetbrains.kotlin.jvm' version '1.9.23'
     id 'org.jetbrains.kotlin.plugin.spring' version '1.9.23'
     id 'application'
+    id 'jacoco'
 }
 
 repositories {
@@ -60,10 +61,13 @@ dependencies {
     implementation 'com.github.SantiPe02:largefilereading:1.1.0-SNAPSHOT'
 
     // redis-events
-    implementation 'com.example:redis-events:0.1.1-SNAPSHOT'
+    implementation 'com.example:redis-events:0.1.2-SNAPSHOT'
 
     // mocking test
     testImplementation 'io.mockk:mockk:1.13.2' // or the latest version
+
+    // used in AssetService
+    implementation "com.squareup.okhttp3:okhttp:4.9.3"
 }
 
 tasks.named('test') {
@@ -78,11 +82,6 @@ bootJar {
 }
 
 
-
-tasks.named('test') {
-    useJUnitPlatform()
-}
-
 tasks.register("installGitHooks", Copy) {
     from new File(rootProject.rootDir, "hook/pre-commit")
     into { new File(rootProject.rootDir, ".git/hooks") }
@@ -90,4 +89,33 @@ tasks.register("installGitHooks", Copy) {
 
 tasks.named("build") {
     dependsOn("installGitHooks")
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+    finalizedBy 'jacocoTestReport'
+}
+
+
+jacoco {
+    toolVersion = "0.8.9"
+}
+
+jacocoTestReport {
+    reports {
+        xml.required = true
+        csv.required = false
+        html.required = true
+        html.outputLocation = layout.buildDirectory.dir('jacocoHtml')
+    }
+}
+
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                minimum = 0.0
+            }
+        }
+    }
 }

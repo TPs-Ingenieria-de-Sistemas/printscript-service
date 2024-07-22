@@ -2,7 +2,6 @@ server:
   port: 8084
 
 spring:
-
   application:
     name: snippet-service
   data:

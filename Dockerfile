@@ -3,8 +3,16 @@ FROM --platform=linux/amd64 gradle:8.7.0-jdk17-jammy AS build
 COPY  . /app
 WORKDIR /app
 RUN chmod +x gradlew
-ARG GH_USER=${GH_USER}
-ARG GH_PAT=${GH_PAT}
+# Define the build arguments
+ARG GH_USER
+ARG GH_PAT
+
+# Set the environment variables for the build process
+ENV GH_USER=${GH_USER}
+ENV GH_PAT=${GH_PAT}
+
+ENV USERNAME=${GH_USER}
+ENV TOKEN=${GH_PAT}
 RUN ./gradlew bootJar
 
 FROM eclipse-temurin:17-jre-jammy
