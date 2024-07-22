@@ -87,7 +87,8 @@ class Service : ServiceInterface {
             "-cp", System.getProperty("java.class.path"),
             "com.example.printscriptservice.printscript.service.implementations.CreateJVMWithEnvKt",
             version,
-            file
+            file,
+            inputs.joinToString("\n")
         ).apply {
             environment().putAll(envMap)
             inputs.forEach { environment()["INPUT"] = it }

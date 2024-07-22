@@ -2,13 +2,15 @@ package com.example.printscriptservice.printscript.controller.interfaces
 
 import TestCaseDTO.RunTestCaseDTO
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 
 @RequestMapping("/test")
 interface TestControllerSpec {
-    @PostMapping("/")
+
+    @PostMapping("/execute")
     fun testExecute(
-        testCaseDTO: RunTestCaseDTO
+        @RequestBody testCaseDTO: RunTestCaseDTO
     ): Boolean
 
 }
