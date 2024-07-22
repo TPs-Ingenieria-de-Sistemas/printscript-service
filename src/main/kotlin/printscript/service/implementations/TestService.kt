@@ -1,13 +1,12 @@
 package com.example.printscriptservice.printscript.service.implementations
 
 import com.example.printscriptservice.printscript.model.ExecuteInput
-import com.example.printscriptservice.printscript.service.interfaces.TestServiceSpec
 import kotlin.math.log
 
 @org.springframework.stereotype.Service
-class TestService: TestServiceSpec {
+class TestService {
 
-    override fun executeTest(executeInput: ExecuteInput, expectedOutput: List<String>): Boolean {
+     fun executeTest(executeInput: ExecuteInput, expectedOutput: List<String>): Boolean {
         val service = Service()
         val output = service.execute(executeInput.version, executeInput.file, executeInput.envs, executeInput.inputs)
 
