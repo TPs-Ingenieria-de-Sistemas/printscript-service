@@ -46,8 +46,8 @@ class LinterEventsConsumer @Autowired constructor(
         logger.info("Received Message from Redis")
         val req = record.value
         println(req.userID + " " + req.snippetID + " " + req.rules + " " + req.language + " " + req.version)
-        val assetSer = AssetService("http://localhost:8081/snippets")
-        /*val assetSer = MockedAssetService("http://localhost:8082/snippets/configurations")*/
+        /*val assetSer = AssetService("http://localhost:8081/snippets")*/
+        val assetSer = MockedAssetService("http://localhost:8082/snippets")
         val snippet = assetSer.getSnippet(req.userID, req.snippetName)
 
         snippet.onFailure {
