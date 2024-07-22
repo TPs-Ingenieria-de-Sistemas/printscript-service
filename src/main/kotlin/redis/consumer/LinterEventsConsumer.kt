@@ -24,7 +24,7 @@ class LinterEventsConsumer @Autowired constructor(
     @Value("\${redis.stream.linter-request-key}") streamKey: String,
     @Value("\${redis.groups.lint}") groupId: String,
     private val printscriptService: Service,
-
+    private val assetSer: AssetService,
     private val producer: LinterEventsProducer
 ) : RedisStreamConsumer<LintRequestEvent>(streamKey, groupId, redis) {
 
@@ -46,21 +46,12 @@ class LinterEventsConsumer @Autowired constructor(
         logger.info("Received Message from Redis")
         val req = record.value
         println(req.userID + " " + req.snippetID + " " + req.rules + " " + req.language + " " + req.version)
-        /*val assetSer = AssetService("http://localhost:8081/snippets")*/
-        val assetSer = MockedAssetService("http://localhost:8082/snippets")
-        val snippet = assetSer.getSnippet(req.userID, req.snippetName)
 
-        snippet.onFailure {
-            e ->
-            run {
-                logger.error("Error while getting snippet for linting: $e")
-                runBlocking {
-                    producer.publishEvent(req.userID, req.snippetID, "$e")
-                }
-            }
-        }.onSuccess {
+        try {
+            val snippet = assetSer.getAsset(req.userID, req.snippetName)
+            logger.info("Snippet: $snippet")
             logger.info("Linting Request")
-            val lintRes: ResponseEntity<String> = printscriptService.lint(req.version, it, req.rules)
+            val lintRes: ResponseEntity<String> = printscriptService.lint(req.version, snippet, req.rules)
 
             if(!isPrintscript(req.language)){
                 logger.warn("Unknown language")
@@ -85,6 +76,12 @@ class LinterEventsConsumer @Autowired constructor(
                 runBlocking {
                     producer.publishEvent(req.userID, req.snippetID, "Unknown error while linting")
                 }
+            }
+        }
+        catch (e: Exception) {
+            logger.error("Error while getting snippet for linting: $e")
+            runBlocking {
+                producer.publishEvent(req.userID, req.snippetID, "$e")
             }
         }
     }

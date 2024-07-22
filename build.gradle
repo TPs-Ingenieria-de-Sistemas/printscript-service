@@ -5,6 +5,7 @@ plugins {
     id 'org.jetbrains.kotlin.jvm' version '1.9.23'
     id 'org.jetbrains.kotlin.plugin.spring' version '1.9.23'
     id 'application'
+    id 'jacoco'
 }
 
 repositories {
@@ -81,11 +82,6 @@ bootJar {
 }
 
 
-
-tasks.named('test') {
-    useJUnitPlatform()
-}
-
 tasks.register("installGitHooks", Copy) {
     from new File(rootProject.rootDir, "hook/pre-commit")
     into { new File(rootProject.rootDir, ".git/hooks") }
@@ -93,4 +89,33 @@ tasks.register("installGitHooks", Copy) {
 
 tasks.named("build") {
     dependsOn("installGitHooks")
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+    finalizedBy 'jacocoTestReport'
+}
+
+
+jacoco {
+    toolVersion = "0.8.9"
+}
+
+jacocoTestReport {
+    reports {
+        xml.required = true
+        csv.required = false
+        html.required = true
+        html.outputLocation = layout.buildDirectory.dir('jacocoHtml')
+    }
+}
+
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                minimum = 0.0
+            }
+        }
+    }
 }
