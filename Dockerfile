@@ -4,15 +4,12 @@ COPY  . /app
 WORKDIR /app
 RUN chmod +x gradlew
 
-# Set the environment variables for the build process
-ENV GH_USER=${GH_USER}
-ENV GH_PAT=${GH_PAT}
+ARG USERNAME
+ARG TOKEN
 
-ENV USERNAME=${GH_USER}
-ENV TOKEN=${GH_PAT}
+ENV USERNAME ${USERNAME}
+ENV TOKEN ${TOKEN}
 
-RUN echo "boca"
-RUN echo "user: ${GH_USER}"
 RUN ./gradlew bootJar
 
 FROM eclipse-temurin:17-jre-jammy
