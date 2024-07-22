@@ -4,7 +4,7 @@ import com.example.printscriptservice.assetService.AssetService
 import com.example.printscriptservice.assetService.MockedAssetService
 import com.example.printscriptservice.printscript.service.implementations.Service
 import com.example.printscriptservice.redis.producer.LinterEventsProducer
-import com.example.printscriptservice.redisEvents.LintRequestEvent
+import redisEvents.LintRequestEvent
 import kotlinx.coroutines.runBlocking
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory

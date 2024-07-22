@@ -125,7 +125,6 @@ class Service : ServiceInterface {
         file: String,
         inputs: List<String>,
     ): Result<Interpreter> {
-        logger.info("interpretingFile")
         val tempFile = createConfigTempFile(file, "ps")
         tempFile.inputStream().buffered().use { stream ->
             tempFile.delete()
@@ -138,7 +137,6 @@ class Service : ServiceInterface {
         stream: BufferedInputStream,
         inputs: List<String>,
     ): Result<Interpreter> {
-        logger.info("Executing snippet")
         val lexer = LexerFactoryImpl(version).create()
         val parser = MyParser()
         InterpreterFactoryImpl(version).create()
@@ -148,23 +146,18 @@ class Service : ServiceInterface {
         var tokenizer = PartialStringReadingLexer(lexer)
 
         while (bytesRead != -1) {
-            logger.info("Reading bytes")
             val textBlock = String(buffer, 0, bytesRead, Charset.defaultCharset())
             val tokenizerAndTokens = tokenizer.tokenizeString(textBlock)
             tokenizer = tokenizerAndTokens.first
             val tokens = tokenizerAndTokens.second
-            logger.info("Tokens: $tokens")
             val ast =
                 parser.parseTokens(tokens).getOrElse {
                     logger.error("Error at parsing tokens", it)
                     return Result.failure(it)
                 }
-            logger.info("parsed tokens")
             interpreter = interpreter.interpret(ast)
-            logger.info("interpreted")
             bytesRead = stream.read(buffer)
         }
-        logger.info("Snippet executed successfully")
         stream.close()
         return Result.success(interpreter)
     }

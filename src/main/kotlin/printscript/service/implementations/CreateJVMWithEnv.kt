@@ -6,6 +6,11 @@ import java.io.BufferedInputStream
 import java.nio.charset.Charset
 
 fun main(args: Array<String>) {
+    val outputs = runInterpreter(args)
+    println(outputs.joinToString("\n"))
+}
+
+fun runInterpreter(args: Array<String>): List<String> {
     val version = args[0]
     val file = args[1]
     val inputs = args.drop(2)
@@ -16,17 +21,17 @@ fun main(args: Array<String>) {
 
     val interpreter: Interpreter = service.interpretFile(version, file, inputs).getOrElse {
         logger.error("Error at interpreting file", it)
-        return
+        return listOf("Error at interpreting file: ${it.message}")
     }
 
-    logger.info("getting report")
     val report = interpreter.report
-    val response = StringBuilder()
-    report.outputs.forEach { out -> println(response.append(out))}
+    val response = mutableListOf<String>()
+    report.outputs.forEach { out -> response.add(out) }
 
     if (report.errors.isNotEmpty()) {
-        println("Found errors while executing:")
-        report.errors.forEach { println(it) }
+        response.add("Found errors while executing:")
+        report.errors.forEach { response.add(it) }
     }
-}
 
+    return response
+}

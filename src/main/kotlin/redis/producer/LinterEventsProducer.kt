@@ -1,6 +1,6 @@
 package com.example.printscriptservice.redis.producer
 
-import com.example.printscriptservice.redisEvents.LintResultEvent
+import redisEvents.LintResultEvent
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.redis.core.ReactiveRedisTemplate
