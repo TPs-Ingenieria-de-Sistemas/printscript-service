@@ -71,73 +71,131 @@ class Service : ServiceInterface {
         tempConfigFile.delete()
         return ResponseEntity.ok(output)
     }
+    /*
+        override fun execute(
+            version: String,
+            file: String,
+            envs: List<EnvVar>,
+            inputs: List<String>,
+        ): ResponseEntity<String> {
+            // Configurar las variables de entorno para la nueva JVM
+            val envMap = envs.associate { it.name to it.value }
+            val envVars = envMap.entries.joinToString(" ") { (key, value) -> "$key=$value" }
 
-    override fun execute(
-        version: String,
-        file: String,
-        envs: List<EnvVar>,
-        inputs: List<String>,
-    ): ResponseEntity<String> {
-        // Configurar las variables de entorno para la nueva JVM
-        val envMap = envs.associate { it.name to it.value }
-        val envVars = envMap.entries.joinToString(" ") { (key, value) -> "$key=$value" }
-
-        val processBuilder = ProcessBuilder(
-            "java",
-            "-cp", System.getProperty("java.class.path"),
-            "com.example.printscriptservice.printscript.service.implementations.CreateJVMWithEnvKt",
-            version,
-            file,
-            inputs.joinToString("\n")
-        ).apply {
-            environment().putAll(envMap)
-            inputs.forEach { environment()["INPUT"] = it }
-        }
-
-        val env = processBuilder.environment()
-        for (e in envs) {
-            env[e.name] = e.value
-        }
-        logger.info("Added Env Vars")
-        return try {
-            val process = processBuilder.start()
-            val output = process.inputStream.bufferedReader().readText()
-            val errors = process.errorStream.bufferedReader().readText()
-            val exitCode = process.waitFor()
-
-            if (exitCode != 0) {
-                logger.error("Error ejecutando el código: $errors")
-                ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error ejecutando el código:\n$errors")
-            } else {
-                ResponseEntity.ok(output)
+            val processBuilder = ProcessBuilder(
+                "java",
+                "-cp", System.getProperty("java.class.path"),
+                "com.example.printscriptservice.printscript.service.implementations.CreateJVMWithEnvKt",
+                version,
+                file
+            ).apply {
+                environment().putAll(envMap)
+                inputs.forEach { environment()["INPUT"] = it }
             }
-        } catch (e: IOException) {
-            logger.error("Error al iniciar el proceso: ", e)
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al iniciar el proceso:\n${e.message}")
-        } catch (e: InterruptedException) {
-            logger.error("Proceso interrumpido: ", e)
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Proceso interrumpido:\n${e.message}")
+
+            val env = processBuilder.environment()
+            for (e in envs) {
+                env[e.name] = e.value
+            }
+            logger.info("Added Env Vars")
+            return try {
+                val process = processBuilder.start()
+                val output = process.inputStream.bufferedReader().readText()
+                val errors = process.errorStream.bufferedReader().readText()
+                val exitCode = process.waitFor()
+
+                if (exitCode != 0) {
+                    logger.error("Error ejecutando el código: $errors")
+                    ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error ejecutando el código:\n$errors")
+                } else {
+                    ResponseEntity.ok(output)
+                }
+            } catch (e: IOException) {
+                logger.error("Error al iniciar el proceso: ", e)
+                ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al iniciar el proceso:\n${e.message}")
+            } catch (e: InterruptedException) {
+                logger.error("Proceso interrumpido: ", e)
+                ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Proceso interrumpido:\n${e.message}")
+            }
         }
+
+
+        fun interpretFile(
+            version: String,
+            file: String,
+            inputs: List<String>,
+        ): Result<Interpreter> {
+            val tempFile = createConfigTempFile(file, "ps")
+            tempFile.inputStream().buffered().use { stream ->
+                tempFile.delete()
+                return interpretStream(version, stream, inputs)
+            }
+        }
+
+        fun interpretStream(
+            version: String,
+            stream: BufferedInputStream,
+            inputs: List<String>,
+        ): Result<Interpreter> {
+            val lexer = LexerFactoryImpl(version).create()
+            val parser = MyParser()
+            InterpreterFactoryImpl(version).create()
+            var interpreter = Interpreter(inputReader = MockInputReader(inputs))
+            val buffer = ByteArray(1046)
+            var bytesRead = stream.read(buffer)
+            var tokenizer = PartialStringReadingLexer(lexer)
+
+            while (bytesRead != -1) {
+                val textBlock = String(buffer, 0, bytesRead, Charset.defaultCharset())
+                val tokenizerAndTokens = tokenizer.tokenizeString(textBlock)
+                tokenizer = tokenizerAndTokens.first
+                val tokens = tokenizerAndTokens.second
+                val ast =
+                    parser.parseTokens(tokens).getOrElse {
+                        logger.error("Error at parsing tokens", it)
+                        return Result.failure(it)
+                    }
+                interpreter = interpreter.interpret(ast)
+                bytesRead = stream.read(buffer)
+            }
+            stream.close()
+            return Result.success(interpreter)
+        }*/
+
+    override fun execute(version: String,
+                         file: String,
+                         envs: List<EnvVar>,
+                         inputs: List<String>,): ResponseEntity<String>{
+
+        val interpreter: Interpreter = interpretFile(version, file, inputs).getOrElse {
+            logger.error("Error at interpreting file", it)
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(it.message)
+        }
+        logger.info("getting report")
+        val report = interpreter.report
+        val response = StringBuilder()
+        report.outputs.forEach { out -> response.append(out).append("\n") }
+
+        if (report.errors.isNotEmpty()) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Found errors in while executing:\n" + report.errors.joinToString("\n") { it })
+        }
+
+        return ResponseEntity.ok(response.toString())
     }
 
-
-    fun interpretFile(
-        version: String,
-        file: String,
-        inputs: List<String>,
-    ): Result<Interpreter> {
+    fun interpretFile(version: String, file: String, inputs: List<String>):  Result<Interpreter>{
+        logger.info("interpretingFile")
         val tempFile = createConfigTempFile(file, "ps")
         tempFile.inputStream().buffered().use { stream ->
             tempFile.delete()
             return interpretStream(version, stream, inputs)
         }
+
     }
 
-    fun interpretStream(
-        version: String,
-        stream: BufferedInputStream,
-        inputs: List<String>,
-    ): Result<Interpreter> {
+    // Basically the same method the CLI uses. We may, eventually, not receive BufferedInputStream but a different, similar, data type.
+    fun interpretStream(version: String, stream: BufferedInputStream, inputs: List<String>): Result<Interpreter> {
+        logger.info("Executing snippet")
         val lexer = LexerFactoryImpl(version).create()
         val parser = MyParser()
         InterpreterFactoryImpl(version).create()
@@ -147,21 +205,27 @@ class Service : ServiceInterface {
         var tokenizer = PartialStringReadingLexer(lexer)
 
         while (bytesRead != -1) {
+            logger.info("Reading bytes")
             val textBlock = String(buffer, 0, bytesRead, Charset.defaultCharset())
             val tokenizerAndTokens = tokenizer.tokenizeString(textBlock)
             tokenizer = tokenizerAndTokens.first
             val tokens = tokenizerAndTokens.second
-            val ast =
-                parser.parseTokens(tokens).getOrElse {
-                    logger.error("Error at parsing tokens", it)
-                    return Result.failure(it)
-                }
+            logger.info("Tokens: $tokens")
+            val ast = parser.parseTokens(tokens).getOrElse {
+                logger.error("Error at parsing tokens", it)
+                return Result.failure(it)
+            }
+            logger.info("parsed tokens")
             interpreter = interpreter.interpret(ast)
+            logger.info("interpreted")
             bytesRead = stream.read(buffer)
+
         }
+        logger.info("Snippet executed successfully")
         stream.close()
         return Result.success(interpreter)
     }
+
 
     override fun format(
         version: String,
