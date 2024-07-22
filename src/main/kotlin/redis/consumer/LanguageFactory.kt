@@ -1,4 +1,4 @@
-package com.example.printscriptservice.printscript.service.implementations
+package com.example.printscriptservice.redis.consumer
 
 import Linter
 import MyLinter
